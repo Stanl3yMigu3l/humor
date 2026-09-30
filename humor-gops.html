@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Humor do Setor — GOPS/COPS · SENAC RR</title>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #fff;
+      font-family: 'Segoe UI', -apple-system, system-ui, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* ─── PAGE SHELL ─── */
+    .page {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ─── HEADER ─── */
+    .header {
+      flex-shrink: 0;
+      height: 13vh;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5vw;
+      border-bottom: 1.5px solid #ebebeb;
+      background: #fff;
+      position: relative;
+      z-index: 30;
+    }
+
+    .sector-name {
+      font-size: clamp(2rem, 3.8vw, 3.8rem);
+      font-weight: 900;
+      color: #111;
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+
+    .sector-name em {
+      color: #ddd;
+      font-style: normal;
+    }
+
+    .sector-sub {
+      font-size: clamp(0.7rem, 1.3vw, 1.15rem);
+      color: #aaa;
+      margin-top: 0.4rem;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .senac-brand {
+      text-align: right;
+    }
+
+    .senac-brand .logo {
+      font-size: clamp(2rem, 3.8vw, 3.8rem);
+      font-weight: 900;
+      color: #c8102e;
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+
+    .senac-brand .sub {
+      font-size: clamp(0.7rem, 1.3vw, 1.15rem);
+      color: #ccc;
+      margin-top: 0.4rem;
+    }
+
+    /* ─── MAIN CANVAS AREA ─── */
+    .main {
+      flex: 1;
+      position: relative;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    /* subtle background shimmer grid — purely decorative */
+    .main::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(200,200,200,0.06) 0%, transparent 60%),
+        radial-gradient(circle at 80% 70%, rgba(200,200,200,0.06) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Three.js canvas fills the main area */
+    #three-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    /* Glow ring — sits below the canvas, visible through its transparency */
+    .glow-ring {
+      position: absolute;
+      top: 44%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(38vw, 54vh);
+      height: min(38vw, 54vh);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,107,53,0.18) 0%, transparent 68%);
+      pointer-events: none;
+      animation: pulse 2.6s ease-in-out infinite;
+      transition: background 0.9s ease;
+      z-index: 1;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1.0);   opacity: 0.75; }
+      50%       { transform: translate(-50%, -50%) scale(1.2);   opacity: 1.0;  }
+    }
+
+    /* Mood name label — overlaid on canvas, bottom-center of main */
+    .mood-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 26%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .humor-tag {
+      font-size: clamp(0.6rem, 1.1vw, 0.95rem);
+      font-weight: 600;
+      letter-spacing: 6px;
+      color: #d0d0d0;
+      text-transform: uppercase;
+      margin-bottom: 0.55rem;
+    }
+
+    .mood-name {
+      font-size: clamp(2.5rem, 8.5vw, 7rem);
+      font-weight: 900;
+      letter-spacing: -1px;
+      text-transform: uppercase;
+      line-height: 1;
+      transition: color 0.7s ease;
+    }
+
+    /* ─── BOTTOM BAR ─── */
+    .bottom-bar {
+      flex-shrink: 0;
+      height: 16vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0.5rem, 2vw, 3rem);
+      padding: 0 4vw;
+      border-top: 1.5px solid #ebebeb;
+      background: #fff;
+      position: relative;
+      z-index: 30;
+    }
+
+    .mood-chip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.5rem 0.8rem;
+      border-radius: 12px;
+      opacity: 0.28;
+      transition: all 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .mood-chip:not(.active):hover {
+      opacity: 0.65;
+      transform: scale(1.1) translateY(-3px);
+    }
+
+    .mood-chip.active {
+      opacity: 1;
+      transform: scale(1.25) translateY(-5px);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.1);
+    }
+
+    .chip-emoji {
+      font-size: clamp(1.5rem, 2.4vw, 2.4rem);
+      line-height: 1;
+    }
+
+    .chip-label {
+      font-size: clamp(0.5rem, 0.8vw, 0.75rem);
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* ─── CLOCK ─── */
+    .clock {
+      position: fixed;
+      bottom: 1.2vh;
+      right: 2.5vw;
+      font-size: clamp(0.6rem, 0.95vw, 0.85rem);
+      color: #ccc;
+      font-weight: 400;
+      z-index: 99;
+      pointer-events: none;
+    }
+
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div>
+      <div class="sector-name">GOPS <em>/</em> COPS</div>
+      <div class="sector-sub">Gerência de Operações e Serviços &nbsp;·&nbsp; SENAC RR</div>
+    </div>
+    <div class="senac-brand">
+      <div class="logo">SENAC</div>
+      <div class="sub">Roraima</div>
+    </div>
+  </header>
+
+  <!-- MAIN (Three.js lives here) -->
+  <main class="main" id="main-area">
+    <div class="glow-ring"  id="glow-ring"></div>
+    <canvas id="three-canvas"></canvas>
+    <div class="mood-overlay">
+      <div class="humor-tag">Humor do Setor</div>
+      <div class="mood-name" id="mood-name">PRODUTIVO</div>
+    </div>
+  </main>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottom-bar" id="bottom-bar"></div>
+
+</div>
+
+<!-- CLOCK -->
+<div class="clock" id="clock"></div>
+
+
+<!-- ════════════════════════════════════════════════════
+     SCRIPT
+════════════════════════════════════════════════════ -->
+<script>
+// ── MOODS ───────────────────────────────────────────
+const MOODS = [
+  { emoji: '😄', label: 'FELIZ',                   color: '#F4B400' },
+  { emoji: '😌', label: 'CALMO',                   color: '#34A853' },
+  { emoji: '🍕', label: 'PENSANDO NO LANCHE',      color: '#FF6B35' },
+  { emoji: '😴', label: 'CANSADO',                 color: '#9C27B0' },
+  { emoji: '🤯', label: 'NO LIMITE',               color: '#EA4335' },
+  { emoji: '🥳', label: 'EM CLIMA DE FESTA',       color: '#E91E63' },
+  { emoji: '🫣', label: 'MELHOR NÃO PERGUNTAR',    color: '#607D8B' },
+  { emoji: '📅', label: 'SOBREVIVENDO À SEMANA',   color: '#00BCD4' },
+  { emoji: '🔥', label: 'PEGANDO FOGO',            color: '#FF5722' },
+  { emoji: '😂', label: 'SÓ RINDO PRA NÃO CHORAR', color: '#FFB300' },
+];
+
+const SPIN_SPEED  = 1.35; // rad/s for Y rotation
+const FADE_SPEED  = 3.0;  // opacity change per second
+
+// ── STATE ──────────────────────────────────────────
+let curIdx   = 0;
+let nxtIdx   = 0;
+let alpha    = 1.0;
+let transDir = null;   // null | 'out' | 'in'
+
+// ── BUILD BOTTOM BAR ──────────────────────────────
+const bottomBar = document.getElementById('bottom-bar');
+MOODS.forEach((m, i) => {
+  const el = document.createElement('div');
+  el.className = 'mood-chip' + (i === curIdx ? ' active' : '');
+  el.id = `chip-${i}`;
+  el.style.background = i === curIdx ? `${m.color}18` : 'transparent';
+  el.innerHTML =
+    `<span class="chip-emoji">${m.emoji}</span>` +
+    `<span class="chip-label">${m.label}</span>`;
+  el.addEventListener('click', () => {
+    if (transDir !== null) return;   // aguarda transição anterior terminar
+    if (i === curIdx) return;        // já está ativo
+    nxtIdx   = i;
+    transDir = 'out';
+  });
+  bottomBar.appendChild(el);
+});
+
+// ── CLOCK ─────────────────────────────────────────
+const clockEl = document.getElementById('clock');
+function updateClock() {
+  const n  = new Date();
+  const dd = n.toLocaleDateString('pt-BR', {
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
+  });
+  const hh = n.toLocaleTimeString('pt-BR', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+  clockEl.textContent = `${dd}  ·  ${hh}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── THEME ─────────────────────────────────────────
+const glowEl     = document.getElementById('glow-ring');
+const moodNameEl = document.getElementById('mood-name');
+
+function applyTheme(idx) {
+  const m = MOODS[idx];
+  moodNameEl.style.color = m.color;
+  moodNameEl.textContent = m.label;
+  glowEl.style.background =
+    `radial-gradient(circle, ${m.color}22 0%, transparent 68%)`;
+  MOODS.forEach((_, i) => {
+    const c = document.getElementById(`chip-${i}`);
+    if (!c) return;
+    c.classList.toggle('active', i === idx);
+    c.style.background = i === idx ? `${MOODS[i].color}18` : 'transparent';
+  });
+}
+applyTheme(curIdx);
+
+// ═══════════════════════════════════════════════════
+// THREE.JS
+// ═══════════════════════════════════════════════════
+const mainArea = document.getElementById('main-area');
+const canvas3  = document.getElementById('three-canvas');
+
+const renderer = new THREE.WebGLRenderer({ canvas: canvas3, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 0);
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 100);
+camera.position.z = 7.2;
+
+function onResize() {
+  const w = mainArea.clientWidth, h = mainArea.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+onResize();
+window.addEventListener('resize', onResize);
+
+// ── Emoji → Three.js texture ──────────────────────
+function emojiTexture(emoji, size = 512) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  const fs  = Math.round(size * 0.78);
+  ctx.font          = `${fs}px serif`;
+  ctx.textAlign     = 'center';
+  ctx.textBaseline  = 'middle';
+  ctx.fillText(emoji, size / 2, size / 2 + fs * 0.04);
+  const tex = new THREE.CanvasTexture(c);
+  tex.needsUpdate = true;
+  return tex;
+}
+
+// Pre-build all textures (no stutter on transitions)
+const textures = MOODS.map(m => emojiTexture(m.emoji, 512));
+
+// ── Main spinning card (plane, DoubleSide) ─────────
+const cardGeo = new THREE.PlaneGeometry(3.8, 3.8);
+const cardMat = new THREE.MeshBasicMaterial({
+  map:         textures[curIdx],
+  transparent: true,
+  side:        THREE.DoubleSide,
+  opacity:     1.0,
+});
+const card = new THREE.Mesh(cardGeo, cardMat);
+card.position.y = 0.25; // shift up a touch to make room for label
+scene.add(card);
+
+// ── Subtle ambient floaters ────────────────────────
+const floaters = MOODS.map((m, i) => {
+  const g   = new THREE.PlaneGeometry(0.5, 0.5);
+  const mat = new THREE.MeshBasicMaterial({
+    map:         textures[i],
+    transparent: true,
+    opacity:     0.07 + Math.random() * 0.07,
+    side:        THREE.DoubleSide,
+    depthWrite:  false,
+  });
+  const mesh  = new THREE.Mesh(g, mat);
+  const angle = (i / MOODS.length) * Math.PI * 2;
+  const r     = 2.6 + Math.random() * 1.4;
+  mesh.position.set(
+    Math.cos(angle) * r,
+    (Math.random() - 0.5) * 4,
+    -2.5 - Math.random() * 1.5
+  );
+  mesh.userData = {
+    baseAngle:   angle,
+    r,
+    orbitSpeed:  0.003 + Math.random() * 0.004,
+    driftY:      (Math.random() - 0.5) * 0.003,
+    rotZ:        (Math.random() - 0.5) * 0.01,
+    rotY:        0.004 + Math.random() * 0.008,
+    t:           Math.random() * Math.PI * 2,
+  };
+  scene.add(mesh);
+  return mesh;
+});
+
+// ─── Ring of small particles around the center ────
+const ringParticles = [];
+for (let i = 0; i < 24; i++) {
+  const g    = new THREE.PlaneGeometry(0.18, 0.18);
+  const mIdx = i % MOODS.length;
+  const mat  = new THREE.MeshBasicMaterial({
+    map:         textures[mIdx],
+    transparent: true,
+    opacity:     0.0,          // start invisible, will fade in/out
+    side:        THREE.DoubleSide,
+    depthWrite:  false,
+  });
+  const mesh  = new THREE.Mesh(g, mat);
+  const angle = (i / 24) * Math.PI * 2;
+  const r     = 2.1 + (i % 3) * 0.3;
+  mesh.position.set(Math.cos(angle) * r, Math.sin(angle) * r, 0);
+  mesh.userData = { angle, r, speed: 0.006 + Math.random() * 0.004 };
+  scene.add(mesh);
+  ringParticles.push(mesh);
+}
+
+// ══════════════════════════════════════════════════
+// ANIMATION LOOP
+// ══════════════════════════════════════════════════
+const clock3js = new THREE.Clock();
+let rotY3 = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock3js.getDelta(), 0.05);
+
+  // ── Spin main card on Y ──────────────────────────
+  rotY3 += SPIN_SPEED * dt;
+  card.rotation.y = rotY3;
+  card.rotation.x = Math.sin(rotY3 * 0.3) * 0.1;   // gentle pitch wobble
+
+  // ── Fade OUT ────────────────────────────────────
+  if (transDir === 'out') {
+    alpha -= FADE_SPEED * dt;
+    if (alpha <= 0) {
+      alpha              = 0;
+      curIdx             = nxtIdx;
+      cardMat.map        = textures[curIdx];
+      cardMat.map.needsUpdate = true;
+      applyTheme(curIdx);
+      transDir           = 'in';
+    }
+    cardMat.opacity     = Math.max(0, alpha);
+    moodNameEl.style.opacity = Math.max(0, alpha);
+  }
+
+  // ── Fade IN ─────────────────────────────────────
+  if (transDir === 'in') {
+    alpha += FADE_SPEED * dt;
+    if (alpha >= 1) {
+      alpha    = 1;
+      transDir = null;
+    }
+    cardMat.opacity          = Math.min(1, alpha);
+    moodNameEl.style.opacity = Math.min(1, alpha);
+  }
+
+  // ── Animate orbit floaters ───────────────────────
+  floaters.forEach(f => {
+    const ud = f.userData;
+    ud.t += ud.orbitSpeed;
+    f.position.x = Math.cos(ud.t + ud.baseAngle) * ud.r;
+    f.position.y += ud.driftY;
+    if (f.position.y >  4.2) ud.driftY = -Math.abs(ud.driftY);
+    if (f.position.y < -4.2) ud.driftY =  Math.abs(ud.driftY);
+    f.rotation.z += ud.rotZ;
+    f.rotation.y += ud.rotY;
+  });
+
+  // ── Animate ring particles (slow orbit, pulse opacity) ──
+  const ringT = clock3js.getElapsedTime();
+  ringParticles.forEach((p, i) => {
+    const ud   = p.userData;
+    ud.angle  += ud.speed;
+    p.position.x = Math.cos(ud.angle) * ud.r;
+    p.position.y = Math.sin(ud.angle) * ud.r;
+    p.rotation.z += 0.015;
+    // pulsing opacity — wave across ring
+    const phase  = (i / ringParticles.length) * Math.PI * 2;
+    p.material.opacity = 0.04 + Math.abs(Math.sin(ringT * 0.7 + phase)) * 0.08;
+  });
+
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>

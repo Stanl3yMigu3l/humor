@@ -227,6 +227,110 @@
       pointer-events: none;
     }
 
+
+    /* ═══════════════════════════════════════
+       RESPONSIVO — TABLET (≤ 900px)
+    ═══════════════════════════════════════ */
+    @media (max-width: 900px) {
+      .header {
+        height: auto;
+        min-height: 9vh;
+        padding: 1rem 4vw;
+      }
+
+      .sector-name {
+        font-size: clamp(1.3rem, 4.5vw, 2.2rem);
+        letter-spacing: -1px;
+      }
+
+      .sector-sub { font-size: clamp(0.6rem, 2vw, 0.9rem); margin-top: 0.2rem; }
+
+      .senac-brand .logo {
+        font-size: clamp(1.3rem, 4.5vw, 2.2rem);
+        letter-spacing: -1px;
+      }
+
+      .senac-brand .sub { font-size: clamp(0.6rem, 2vw, 0.9rem); }
+
+      /* Bottom bar: scroll horizontal quando chips não cabem */
+      .bottom-bar {
+        height: auto;
+        min-height: 13vh;
+        padding: 0.6rem 2vw;
+        gap: clamp(0.3rem, 1.5vw, 1.5rem);
+        overflow-x: auto;
+        justify-content: flex-start;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .bottom-bar::-webkit-scrollbar { display: none; }
+
+      .mood-chip {
+        flex-shrink: 0;
+        scroll-snap-align: start;
+        padding: 0.45rem 0.7rem;
+      }
+
+      .mood-chip.active { transform: scale(1.18) translateY(-4px); }
+
+      .chip-emoji  { font-size: clamp(1.3rem, 3.5vw, 2.2rem); }
+      .chip-label  { font-size: clamp(0.45rem, 1.2vw, 0.7rem); }
+
+      .mood-name   { font-size: clamp(2rem, 6.5vw, 5rem); }
+      .humor-tag   { letter-spacing: 4px; }
+    }
+
+    /* ═══════════════════════════════════════
+       RESPONSIVO — CELULAR (≤ 540px)
+    ═══════════════════════════════════════ */
+    @media (max-width: 540px) {
+      .header {
+        flex-wrap: wrap;
+        gap: 0.2rem 0;
+        padding: 0.7rem 4vw;
+      }
+
+      .sector-name {
+        font-size: clamp(1.2rem, 6vw, 1.8rem);
+        letter-spacing: -0.5px;
+      }
+
+      .sector-sub  { font-size: clamp(0.55rem, 2.8vw, 0.8rem); }
+
+      .senac-brand .logo {
+        font-size: clamp(1.2rem, 6vw, 1.8rem);
+        letter-spacing: -0.5px;
+      }
+
+      .senac-brand .sub { font-size: clamp(0.55rem, 2.8vw, 0.8rem); }
+
+      .bottom-bar {
+        min-height: 15vh;
+        padding: 0.5rem 3vw;
+        gap: 0.4rem;
+      }
+
+      .mood-chip        { padding: 0.4rem 0.6rem; border-radius: 10px; }
+      .mood-chip.active { transform: scale(1.12) translateY(-3px); }
+      .chip-emoji       { font-size: clamp(1.3rem, 6vw, 1.8rem); }
+      .chip-label       { font-size: clamp(0.42rem, 2vw, 0.6rem); letter-spacing: 0; }
+
+      .mood-name  { font-size: clamp(1.4rem, 9vw, 2.8rem); letter-spacing: 0; }
+      .humor-tag  { font-size: clamp(0.5rem, 2.5vw, 0.75rem); letter-spacing: 3px; }
+
+      .glow-ring  { width: min(55vw, 40vh); height: min(55vw, 40vh); }
+
+      .clock      { font-size: clamp(0.45rem, 2vw, 0.7rem); bottom: 0.5vh; right: 2vw; }
+    }
+
+    /* Pointer explícito — garante que o tap funcione bem no touch */
+    @media (hover: none) {
+      .mood-chip:not(.active):hover { opacity: 0.28; transform: none; }
+      .mood-chip { -webkit-tap-highlight-color: transparent; }
+    }
+
   </style>
 </head>
 <body>
